@@ -5,6 +5,7 @@ print(tf.__version__)
 
 import glob
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import os
 import time
@@ -12,6 +13,8 @@ import cv2
 
 
 from IPython import display
+
+mpl.use('Agg')
 
 class GAN:
     def __init__(self, buff_size=60000, batch_size=256, imgs_size=(28, 28), colors=3, division=4, epochs=60, noise_dim=100):
@@ -32,13 +35,11 @@ class GAN:
         self.checkpoint_dir = './training_checkpoints'
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
         self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer, discriminator_optimizer=self.discriminator_optimizer, generator=self.generator, discriminator=self.discriminator)
+        print("Starting with parameters: ", "BUFFER_SIZE=", self.BUFFER_SIZE, " BATCH_SIZE=", self.BATCH_SIZE, " DATAPART_SIZE=", self.IMAGE_SIZE, " EPOCHS=", self.EPOCHS)
     
-    def normalize(self, x):
-        return (x.astype(float) - 128) / 128
-
     def prepare_dataset(self, dataset):
         dataset = dataset.astype('float32')
-        self.normalize(dataset) # Normalize the images to [-1, 1]
+        dataset = (dataset - 127.5) / 127.5# Normalize the images to [-1, 1]
         return tf.data.Dataset.from_tensor_slices(dataset).shuffle(self.BUFFER_SIZE).batch(self.BATCH_SIZE)
     
     def make_generator_model(self):
@@ -122,6 +123,7 @@ class GAN:
             plt.axis('off')
 
         plt.savefig('animation/image_at_epoch_{:04d}.png'.format(epoch))
+        plt.close(fig)
     
     def train(self, dataset):
         # We will reuse this seed overtime (so it's easier)
@@ -146,3 +148,9 @@ class GAN:
         # Generate after the final epoch
         display.clear_output(wait=True)
         self.generate_and_save_images(self.generator, epoch + 1, seed)
+    
+    def save_model(self):
+        pass
+
+    def load_model(self):
+        pass
