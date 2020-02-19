@@ -1,7 +1,7 @@
 __pycache__
 temp
 data
-model_checkpoints
+model_checkpoints/old
 face_cropper
 final
 datasets
