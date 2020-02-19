@@ -1,7 +1,6 @@
 import telebot, cv2, os, hashlib, random
 
 from gan import GAN
-from multiprocessing import Process, Queue, Pool
 
 random.seed(10)
 
