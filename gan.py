@@ -14,7 +14,7 @@ import cv2
 
 from IPython import display
 
-mpl.use('Agg')
+#mpl.use('Agg')
 
 class GAN:
     def __init__(self, buff_size=60000, batch_size=256, imgs_size=(28, 28), colors=3, division=4, epochs=60, noise_dim=100):
@@ -32,14 +32,16 @@ class GAN:
         self.discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
         # This method returns a helper function to compute cross entropy loss
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-        self.checkpoint_dir = './training_checkpoints'
-        self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
-        self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer, discriminator_optimizer=self.discriminator_optimizer, generator=self.generator, discriminator=self.discriminator)
+        self.checkpoint_path = './model_checkpoints'
+        self.checkpoint_prefix = os.path.join(self.checkpoint_path, "ckpt")
+        self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer, discriminator_optimizer=self.discriminator_optimizer,generator=self.generator, discriminator=self.discriminator,)
+        if os.path.exists(self.checkpoint_path):
+            self.load_model()
         print("Starting with parameters: ", "BUFFER_SIZE=", self.BUFFER_SIZE, " BATCH_SIZE=", self.BATCH_SIZE, " DATAPART_SIZE=", self.IMAGE_SIZE, " EPOCHS=", self.EPOCHS)
     
     def prepare_dataset(self, dataset):
         dataset = dataset.astype('float32')
-        dataset = (dataset - 127.5) / 127.5# Normalize the images to [-1, 1]
+        dataset = dataset / 255.0
         return tf.data.Dataset.from_tensor_slices(dataset).shuffle(self.BUFFER_SIZE).batch(self.BATCH_SIZE)
     
     def make_generator_model(self):
@@ -63,16 +65,16 @@ class GAN:
 
         model.add(tf.keras.layers.Conv2DTranspose(3, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
         assert model.output_shape == (None, self.IMAGE_SIZE[0], self.IMAGE_SIZE[1], 3)
-
+        
         return model
     
     def make_discriminator_model(self):
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same', input_shape=[self.IMAGE_SIZE[0], self.IMAGE_SIZE[1], 3]))
+        model.add(tf.keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same', input_shape=[self.IMAGE_SIZE[0], self.IMAGE_SIZE[1], 3]))
         model.add(tf.keras.layers.LeakyReLU())
         model.add(tf.keras.layers.Dropout(0.3))
 
-        model.add(tf.keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same'))
+        model.add(tf.keras.layers.Conv2D(256, (5, 5), strides=(2, 2), padding='same'))
         model.add(tf.keras.layers.LeakyReLU())
         model.add(tf.keras.layers.Dropout(0.3))
 
@@ -109,13 +111,20 @@ class GAN:
             self.generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
             self.discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, self.discriminator.trainable_variables))
     
+    def generate_image(self):
+        noise = tf.random.normal([1, self.noise_dim])
+        predictions = self.generator(noise, training=False)
+        for i in range(predictions.shape[0]):
+            image = np.float32(predictions[i])
+            cur_shape = image.shape
+            image = cv2.resize(image, (cur_shape[0]*4, cur_shape[1]*4), interpolation=cv2.INTER_CUBIC)
+            return image * 255
+
     def generate_and_save_images(self, model, epoch, test_input):
         # Notice `training` is set to False.
         # This is so all layers run in inference mode (batchnorm).
         predictions = model(test_input, training=False)
-
         fig = plt.figure(figsize=(4,4))
-        print("Saving ", 'animation/image_at_epoch_{:04d}.png'.format(epoch))
 
         for i in range(predictions.shape[0]):
             plt.subplot(4, 4, i+1)
@@ -130,6 +139,7 @@ class GAN:
         # to visualize progress in the animated GIF)
         seed = tf.random.normal([self.num_examples_to_generate, self.noise_dim])
         dataset = self.prepare_dataset(dataset)
+
         for epoch in range(self.EPOCHS):
             start = time.time()
             for image_batch in dataset:
@@ -137,11 +147,12 @@ class GAN:
             
             # Produce images for the GIF as we go
             display.clear_output(wait=True)
-            self.generate_and_save_images(self.generator, epoch + 1, seed)
 
             # Save the model every 15 epochs
             if (epoch + 1) % 100 == 0:
-                self.checkpoint.save(file_prefix = self.checkpoint_prefix)
+                self.save_model()
+            if (epoch + 1) % 5 == 0:
+                self.generate_and_save_images(self.generator, epoch + 1, seed)
             
             print('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
         
@@ -150,7 +161,13 @@ class GAN:
         self.generate_and_save_images(self.generator, epoch + 1, seed)
     
     def save_model(self):
-        pass
+        self.checkpoint.save(file_prefix = self.checkpoint_prefix)
 
     def load_model(self):
-        pass
+        print("Loading weights.")
+        latest = tf.train.latest_checkpoint(self.checkpoint_path)
+        self.checkpoint.restore(latest)
+        self.generator = self.checkpoint.generator
+        self.discriminator = self.checkpoint.discriminator
+        self.generator_optimizer = self.checkpoint.generator_optimizer
+        self.discriminator_optimizer = self.checkpoint.discriminator_optimizer

@@ -1,8 +1,8 @@
 __pycache__
 temp
-cats
 data
-training_checkpoints
+model_checkpoints
+face_cropper
 final
 datasets
 animation

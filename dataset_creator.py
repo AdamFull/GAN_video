@@ -8,7 +8,7 @@ from util import Visualization
 vis = Visualization()
 
 class dataset:
-    def __init__(self, fpath, tpath, width=256, heigth=256, icolor=cv2.COLOR_BGR2GRAY):
+    def __init__(self, tpath,  fpath="", width=256, heigth=256, icolor=cv2.COLOR_BGR2GRAY):
         self.tpath = tpath
         self.dpath = os.path.join(self.tpath, "dumps")
         self.folder_names = ["train"]
