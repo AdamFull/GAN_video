@@ -3,6 +3,7 @@ import config
 import discord
 from discord.ext import commands, tasks
 from itertools import cycle
+from random import choice
 
 from gan import GAN
 
@@ -132,6 +133,12 @@ async def unload(ctx, extention):
 async def noice(ctx):
     await ctx.send("https://tenor.com/view/noice-nice-click-gif-8843762")
     await ctx.send("clock, noice", tts=True)
+
+@client.command()
+async def who_is_gay_today(ctx):
+    members = ctx.guild.members
+    gay = choice(members)
+    await ctx.send(f"Today gay is {gay.mention}")
 
 @client.command()
 async def wise(ctx):
