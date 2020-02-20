@@ -47,7 +47,7 @@ class dataset:
             success,image = video.read()
             vis.print_progress_bar(i+1, length, label="RAM USAGE %s %s" %  (used_size, size_name), points=70)
             try:
-                image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_CUBIC)
+                image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_LINEAR)
                 image = cv2.cvtColor(image, self.icolor)
             except cv2.error:
                 continue

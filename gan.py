@@ -16,6 +16,8 @@ from IPython import display
 
 #mpl.use('Agg')
 
+self_path = os.path.dirname(os.path.abspath(__file__))
+
 class GAN:
     def __init__(self, buff_size=60000, batch_size=256, imgs_size=(28, 28), colors=3, division=4, epochs=60, noise_dim=100):
         self.BUFFER_SIZE = buff_size
@@ -32,7 +34,7 @@ class GAN:
         self.discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
         # This method returns a helper function to compute cross entropy loss
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-        self.checkpoint_path = './model_checkpoints'
+        self.checkpoint_path = os.path.join(self_path, 'model_checkpoints')
         self.checkpoint_prefix = os.path.join(self.checkpoint_path, "ckpt")
         self.checkpoint = tf.train.Checkpoint(generator_optimizer=self.generator_optimizer, discriminator_optimizer=self.discriminator_optimizer,generator=self.generator, discriminator=self.discriminator,)
         if os.path.exists(self.checkpoint_path):
@@ -117,7 +119,7 @@ class GAN:
         for i in range(predictions.shape[0]):
             image = np.float32(predictions[i])
             cur_shape = image.shape
-            image = cv2.resize(image, (cur_shape[0]*4, cur_shape[1]*4), interpolation=cv2.INTER_CUBIC)
+            image = cv2.resize(image, (cur_shape[0]*2, cur_shape[1]*2), interpolation=cv2.INTER_LINEAR)
             return image * 255
 
     def generate_and_save_images(self, model, epoch, test_input):
@@ -131,7 +133,7 @@ class GAN:
             plt.imshow(cv2.cvtColor(np.float32(predictions[i] * 255), cv2.COLOR_BGR2RGB).astype(np.uint8))
             plt.axis('off')
 
-        plt.savefig('animation/image_at_epoch_{:04d}.png'.format(epoch))
+        plt.savefig(os.path.join(self_path, 'animation/image_at_epoch_{:04d}.png'.format(epoch)))
         plt.close(fig)
     
     def train(self, dataset):

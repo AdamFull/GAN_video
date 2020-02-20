@@ -4,11 +4,11 @@ from gan import GAN
 
 random.seed(10)
 
-width, heigth = 64, 64
+width, heigth = 128, 128
 TOKEN = "1078723988:AAGEqQnbEKEkeRenB09SXeDZmWeJyIsCN88"
 keyboard1 = telebot.types.ReplyKeyboardMarkup()
 keyboard1.row('тян')
-proxy = telebot.apihelper.proxy = {'https': 'socks5h://144.76.99.207:84',}
+proxy = telebot.apihelper.proxy = {'https': 'socks5h://54.38.195.161:56153',}
 
 self_path = os.path.dirname(os.path.abspath(__file__))
 temp_path = os.path.join(self_path, "temp")

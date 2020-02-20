@@ -3,7 +3,7 @@ import os
 from dataset_creator import dataset
 from gan import GAN
 
-width, heigth = 64, 64
+width, heigth = 128, 128
 
 self_path = os.path.dirname(os.path.abspath(__file__))
 temp_path = os.path.join(self_path, "temp")
