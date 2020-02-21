@@ -1,13 +1,14 @@
-import telebot, cv2, os, hashlib, random, threading
+import cv2, os, hashlib
 import config
 import discord
 from discord.ext import commands, tasks
+from discord.utils import get
 from itertools import cycle
-from random import choice
+from random import seed, random, choice
 
 from gan import GAN
 
-random.seed(10)
+seed(10)
 self_path = os.path.dirname(os.path.abspath(__file__))
 temp_path = os.path.join(self_path, "temp")
 
@@ -22,35 +23,6 @@ def get_image(user_uid):
     cv2.imwrite(img_name, image)
     return img_name
 
-
-#---------------------TELEGRAM---------------------
-keyboard1 = telebot.types.ReplyKeyboardMarkup()
-keyboard1.row('gen4me')
-proxy = telebot.apihelper.proxy = {'https': 'socks5h://%s' % config.PROXY_ADDR,}
-
-bot = telebot.TeleBot(config.TG_TOKEN)
-
-@bot.message_handler(commands=['start', 'help'])
-def start_handler(message):
-    bot.send_message(message.chat.id, "This bot is my trying to understand tensorflow and keras. It generates anime-like girls. Or trying to generate. For using type \"gen4me\".", reply_markup=keyboard1)
-
-@bot.message_handler(content_types=['text'])
-def msg_handler(message):
-    if message.text == "gen4me":
-        bot.send_message(message.chat.id, "Wait, loading")
-        img_name = get_image(message.message_id)
-        image = open(img_name, 'rb')
-        bot.send_photo(message.chat.id, image)
-        image.close()
-        os.remove(img_name)
-    else:
-        bot.send_message(message.chat.id, "I'm sorry, i don't know this command. please type \"/help\" or \"start\"")
-
-try:
-    tg_thread = threading.Thread(target=bot.polling, args=(True,))
-    tg_thread.daemon=True
-except Exception as e:
-    print(e)
 
 #---------------------DISCORD---------------------
 client = commands.Bot(command_prefix= '!')
@@ -141,6 +113,13 @@ async def who_is_gay_today(ctx):
     await ctx.send(f"Today gay is {gay.mention}")
 
 @client.command()
+async def friend_me(ctx):
+    idf = ctx.author.id
+    user = await client.get_user(idf)
+    await user.send_friend_request()
+    
+
+@client.command()
 async def wise(ctx):
     await ctx.send("Cedric is a gay i guess...",tts=True)
 
@@ -148,5 +127,4 @@ async def wise(ctx):
 async def change_status():
     await client.change_presence(activity=discord.Game(next(statuses)))
 
-tg_thread.start()
 client.run(config.DC_TOKEN)
