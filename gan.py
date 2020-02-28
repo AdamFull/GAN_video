@@ -120,7 +120,7 @@ class GAN:
             image = np.float32(predictions[i])
             cur_shape = image.shape
             image = cv2.resize(image, (cur_shape[0]*2, cur_shape[1]*2), interpolation=cv2.INTER_LINEAR)
-            return image * 255
+            return image
 
     def generate_and_save_images(self, model, epoch, test_input):
         # Notice `training` is set to False.
