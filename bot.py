@@ -7,6 +7,7 @@ from itertools import cycle
 from random import seed, random, choice
 
 from gan import GAN
+import myparser
 
 seed(10)
 self_path = os.path.dirname(os.path.abspath(__file__))
@@ -18,9 +19,8 @@ if not os.path.exists(temp_path):
 generator = GAN(buff_size=10035, batch_size=16, epochs=5000, imgs_size=(config.width, config.heigth))
 
 def get_image(user_uid):
-    print("Hmm")
     image = generator.generate_image()
-    img_name = os.path.join(temp_path, hashlib.sha256((str(user_uid)+str(random.random())).encode()).hexdigest() + ".jpg")
+    img_name = os.path.join(temp_path, hashlib.sha256(str(user_uid).encode()).hexdigest() + ".jpg")
     cv2.imwrite(img_name, image * 255)
     return img_name
 
@@ -116,6 +116,15 @@ async def who_is(ctx, *, question):
 @client.command()
 async def wise(ctx):
     await ctx.send("Cedric is a gay i guess...",tts=True)
+
+@client.command()
+async def memes(ctx, *, request):
+    try:
+        results = myparser.parse(request)
+    except Exception as e:
+        await ctx.send(f"Oh shit, i'm sorry, something is wrong: {e}")
+    for i in range(5):
+        await ctx.send(choice(results))
 
 @tasks.loop(seconds=60)
 async def change_status():
